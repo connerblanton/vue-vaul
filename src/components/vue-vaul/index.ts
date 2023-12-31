@@ -43,6 +43,7 @@ const shouldScaleBackground = ref(true)
 const justReleased = ref(false)
 
 const scrollLockTimeout = ref(SCROLL_LOCK_TIMEOUT)
+const closeThreshold = ref(CLOSE_THRESHOLD)
 
 const drawerHeightRef = computed(() => drawerRef.value?.$el.getBoundingClientRect().height || 0)
 
@@ -125,14 +126,13 @@ function handlePointerDown (event: PointerEvent) {
   // }
   // Ensure we maintain correct pointer capture even when going outside of the drawer
   (event.target as HTMLElement).setPointerCapture(event.pointerId);
-  pointerStartY.value = event.clientY
+  pointerStartY.value = event.screenY
 }
 
 function handlePointerMove(event: PointerEvent) {
   // We need to know how much of the drawer has been dragged in percentages so that we can transform background accordingly
   if (isDragging.value) {
-    console.log('handlePointerMove', event)
-    const draggedDistance = pointerStartY.value - event.screenY;
+    const draggedDistance = pointerStartY.value - event.screenY
     const isDraggingDown = draggedDistance > 0;
 
     // Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
@@ -143,11 +143,11 @@ function handlePointerMove(event: PointerEvent) {
     drawerRef?.value?.$el.classList.add(DRAG_CLASS);
     // If shouldDrag gave true once after pressing down on the drawer, we set isAllowedToDrag to true and it will remain true until we let go, there's no reason to disable dragging mid way, ever, and that's the solution to it
     isAllowedToDrag.value = true;
-    set(drawerRef.value, {
+    set(drawerRef.value.$el, {
       transition: 'none',
     });
 
-    set(overlayRef.value, {
+    set(overlayRef.value.$el, {
       transition: 'none',
     });
 
@@ -157,10 +157,10 @@ function handlePointerMove(event: PointerEvent) {
     // }
 
     // Run this only if snapPoints are not defined or if we are at the last snap point (highest one)
-    if (isDraggingDown && !snapPoints) {
+    if (isDraggingDown && !snapPoints.value) {
       const dampenedDraggedDistance = dampenValue(draggedDistance);
 
-      set(drawerRef.value, {
+      set(drawerRef.value.$el, {
         transform: `translate3d(0, ${Math.min(dampenedDraggedDistance * -1, 0)}px, 0)`,
       });
       return;
@@ -212,8 +212,8 @@ function handlePointerMove(event: PointerEvent) {
       );
     }
 
-    if (!snapPoints) {
-      set(drawerRef.value, {
+    if (!snapPoints.value) {
+      set(drawerRef.value.$el, {
         transform: `translate3d(0, ${absDraggedDistance}px, 0)`,
       });
     }
@@ -225,12 +225,12 @@ function resetDrawer() {
   const wrapper = document.querySelector('[vaul-drawer-wrapper]');
   const currentSwipeAmount = getTranslateY(drawerRef.value.$el);
 
-  set(drawerRef.value, {
+  set(drawerRef.value.$el, {
     transform: 'translate3d(0, 0, 0)',
     transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
   });
 
-  set(overlayRef.value, {
+  set(overlayRef.value.$el, {
     transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
     opacity: '1',
   });
@@ -257,12 +257,12 @@ function closeDrawer() {
   if (!drawerRef.value) return;
 
   // onClose?.();
-  set(drawerRef.value, {
+  set(drawerRef.value.$el, {
     transform: `translate3d(0, 100%, 0)`,
     transition: `transform ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
   });
 
-  set(overlayRef.value, {
+  set(overlayRef.value.$el, {
     opacity: '0',
     transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
   });
@@ -337,9 +337,9 @@ function handlePointerUp(event: PointerEvent) {
     return;
   }
 
-  const visibleDrawerHeight = Math.min(drawerRef.value.getBoundingClientRect().height ?? 0, window.innerHeight);
+  const visibleDrawerHeight = Math.min(drawerRef.value.$el.getBoundingClientRect().height ?? 0, window.innerHeight);
 
-  if (swipeAmount >= visibleDrawerHeight * closeThreshold) {
+  if (swipeAmount >= visibleDrawerHeight * closeThreshold.value) {
     closeDrawer();
     // onReleaseProp?.(event, false);
     return;
