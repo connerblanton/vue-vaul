@@ -1,6 +1,7 @@
 import { computed, ref, provide, inject } from 'vue'
 import { set, reset, getTranslateY, dampenValue } from './helpers'
 import { TRANSITIONS, VELOCITY_THRESHOLD } from './constants'
+import { useSnapPoints } from './useSnapPoints'
 import type { Ref } from 'vue'
 
 const CLOSE_THRESHOLD = 0.25
@@ -14,6 +15,32 @@ const NESTED_DISPLACEMENT = 16
 const WINDOW_TOP_OFFSET = 26
 
 const DRAG_CLASS = 'vaul-dragging'
+
+export interface WithFadeFromProps {
+  snapPoints: (number | string)[];
+  fadeFromIndex: number;
+}
+
+export interface WithoutFadeFromProps {
+  snapPoints?: (number | string)[];
+  fadeFromIndex?: never;
+}
+
+export type DialogProps = {
+  activeSnapPoint?: number | string | null;
+  open?: boolean;
+  closeThreshold?: number;
+  onOpenChange?: (open: boolean) => void;
+  shouldScaleBackground?: boolean;
+  scrollLockTimeout?: number;
+  fixed?: boolean;
+  dismissible?: boolean;
+  onDrag?: (event: PointerEvent, percentageDragged: number) => void;
+  onRelease?: (event: PointerEvent, open: boolean) => void;
+  modal?: boolean;
+  nested?: boolean;
+  onClose?: () => void;
+} & (WithFadeFromProps | WithoutFadeFromProps);
 
 export type Drawer = {
   isOpen: Ref<boolean>
@@ -44,6 +71,31 @@ const justReleased = ref(false)
 
 const scrollLockTimeout = ref(SCROLL_LOCK_TIMEOUT)
 const closeThreshold = ref(CLOSE_THRESHOLD)
+
+const activeSnapPointProp = ref(null)
+const fadeFromIndex = ref(snapPoints.value && snapPoints.value.length - 1)
+
+const onSnapPointChange = () => {
+  // Change openTime ref when we reach the last snap point to prevent dragging for 500ms incase it's scrollable.
+  if (snapPoints.value && activeSnapPointIndex.value === snapPointsOffset.value.length - 1) openTime.value = new Date();
+}
+
+const {
+  activeSnapPoint,
+  activeSnapPointIndex,
+  onRelease: onReleaseSnapPoints,
+  snapPointsOffset,
+  onDrag: onDragSnapPoints,
+  shouldFade,
+  getPercentageDragged: getSnapPointsPercentageDragged,
+} = useSnapPoints({
+  snapPoints: snapPoints.value,
+  activeSnapPointProp: activeSnapPointProp.value,
+  drawerRef,
+  fadeFromIndex: fadeFromIndex.value,
+  overlayRef,
+  onSnapPointChange,
+});
 
 const drawerHeightRef = computed(() => drawerRef.value?.$el.getBoundingClientRect().height || 0)
 
@@ -137,7 +189,7 @@ function handlePointerMove(event: PointerEvent) {
 
     // Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
     // TODO: SnapPoints
-    // if (snapPoints && activeSnapPointIndex === 0 && !dismissible) return;
+    if (snapPoints.value && activeSnapPointIndex.value === 0 && !dismissible) return;
 
     if (!isAllowedToDrag.value && !shouldDrag(event.target, isDraggingDown)) return;
     drawerRef?.value?.$el.classList.add(DRAG_CLASS);
@@ -152,9 +204,9 @@ function handlePointerMove(event: PointerEvent) {
     });
 
     // TODO: SnapPoints
-    // if (snapPoints) {
-    //   onDragSnapPoints({ draggedDistance });
-    // }
+    if (snapPoints.value) {
+      onDragSnapPoints({ draggedDistance });
+    }
 
     // Run this only if snapPoints are not defined or if we are at the last snap point (highest one)
     if (isDraggingDown && !snapPoints.value) {
@@ -172,27 +224,27 @@ function handlePointerMove(event: PointerEvent) {
 
     let percentageDragged = absDraggedDistance / drawerHeightRef.value;
     // TODO: SnapPoints
-    // const snapPointPercentageDragged = getSnapPointsPercentageDragged(absDraggedDistance, isDraggingDown);
+    const snapPointPercentageDragged = getSnapPointsPercentageDragged(absDraggedDistance, isDraggingDown);
 
-    // if (snapPointPercentageDragged !== null) {
-    //   percentageDragged = snapPointPercentageDragged;
-    // }
+    if (snapPointPercentageDragged !== null) {
+      percentageDragged = snapPointPercentageDragged;
+    }
 
     const opacityValue = 1 - percentageDragged;
 
     // TODO: SnapPoints, Fade
-    // if (shouldFade || (fadeFromIndex && activeSnapPointIndex === fadeFromIndex - 1)) {
-    //   onDragProp?.(event, percentageDragged);
+    if (shouldFade || (fadeFromIndex && activeSnapPointIndex.value === fadeFromIndex.value - 1)) {
+      // onDragProp?.(event, percentageDragged);
 
-    //   set(
-    //     overlayRef.value,
-    //     {
-    //       opacity: `${opacityValue}`,
-    //       transition: 'none',
-    //     },
-    //     true,
-    //   );
-    // }
+      set(
+        overlayRef.value,
+        {
+          opacity: `${opacityValue}`,
+          transition: 'none',
+        },
+        true,
+      );
+    }
 
     if (wrapper && overlayRef.value && shouldScaleBackground.value) {
       // Calculate percentageDragged as a fraction (0 to 1)
@@ -275,11 +327,11 @@ function closeDrawer() {
   }, 300);
 
   // TODO: SnapPoints
-  // setTimeout(() => {
-  //   if (snapPoints) {
-  //     setActiveSnapPoint(snapPoints[0]);
-  //   }
-  // }, TRANSITIONS.DURATION * 1000); // seconds to ms
+  setTimeout(() => {
+    if (snapPoints.value) {
+      activeSnapPoint.value = snapPoints.value[0];
+    }
+  }, TRANSITIONS.DURATION * 1000); // seconds to ms
 }
 
 function handlePointerUp(event: PointerEvent) {
@@ -313,16 +365,16 @@ function handlePointerUp(event: PointerEvent) {
   }
 
   // TODO: SnapPoints
-  // if (snapPoints) {
-  //   onReleaseSnapPoints({
-  //     draggedDistance: distMoved,
-  //     closeDrawer,
-  //     velocity,
-  //     dismissible,
-  //   });
-  //   onReleaseProp?.(event, true);
-  //   return;
-  // }
+  if (snapPoints.value) {
+    onReleaseSnapPoints({
+      draggedDistance: distMoved,
+      closeDrawer,
+      velocity,
+      dismissible: dismissible.value,
+    });
+    // onReleaseProp?.(event, true);
+    return;
+  }
 
   // Moved upwards, don't do anything
   if (distMoved > 0) {
