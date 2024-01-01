@@ -177,7 +177,6 @@ function shouldDrag(el: EventTarget | null, isDraggingDown: boolean) {
 function handlePointerDown (event: PointerEvent) {
   if (!dismissible.value && !snapPoints.value) return
   if (drawerRef.value && !drawerRef.value.$el.contains(event.target as Node)) return
-  // drawerHeightRef.value = drawerRef.value?.getBoundingClientRect().height || 0
   isDragging.value = true
   dragStartTime.value = new Date();
 
@@ -197,7 +196,6 @@ function handlePointerMove(event: PointerEvent) {
     const isDraggingDown = draggedDistance > 0;
 
     // Disallow dragging down to close when first snap point is the active one and dismissible prop is set to false.
-    // TODO: SnapPoints
     if (snapPoints.value && activeSnapPointIndex.value === 0 && !dismissible) return;
 
     if (!isAllowedToDrag.value && !shouldDrag(event.target, isDraggingDown)) return;
@@ -212,7 +210,6 @@ function handlePointerMove(event: PointerEvent) {
       transition: 'none',
     });
 
-    // TODO: SnapPoints
     if (snapPoints.value) {
       onDragSnapPoints({ draggedDistance });
     }
@@ -232,7 +229,6 @@ function handlePointerMove(event: PointerEvent) {
     const wrapper = document.querySelector('[vaul-drawer-wrapper]');
 
     let percentageDragged = absDraggedDistance / drawerHeightRef.value;
-    // TODO: SnapPoints
     const snapPointPercentageDragged = getSnapPointsPercentageDragged(absDraggedDistance, isDraggingDown);
 
     if (snapPointPercentageDragged !== null) {
@@ -241,8 +237,8 @@ function handlePointerMove(event: PointerEvent) {
 
     const opacityValue = 1 - percentageDragged;
 
-    // TODO: SnapPoints, Fade
-    if (shouldFade || (fadeFromIndex && activeSnapPointIndex.value === fadeFromIndex.value - 1)) {
+    // TODO: Fade
+    if (shouldFade || (fadeFromIndex.value && activeSnapPointIndex.value === fadeFromIndex.value - 1)) {
       // onDragProp?.(event, percentageDragged);
 
       set(
@@ -255,6 +251,7 @@ function handlePointerMove(event: PointerEvent) {
       );
     }
 
+    // TODO: Scale
     if (wrapper && overlayRef.value && shouldScaleBackground.value) {
       // Calculate percentageDragged as a fraction (0 to 1)
       const scaleValue = Math.min(getScale() + percentageDragged * (1 - getScale()), 1);
@@ -335,7 +332,6 @@ function closeDrawer() {
     isOpen.value = false
   }, 300);
 
-  // TODO: SnapPoints
   setTimeout(() => {
     if (snapPoints.value) {
       activeSnapPoint.value = snapPoints.value[0];
@@ -373,9 +369,7 @@ function handlePointerUp(event: PointerEvent) {
     }, 200);
   }
 
-  // TODO: SnapPoints
   if (snapPoints.value) {
-    console.log('has snapPoints')
     onReleaseSnapPoints({
       draggedDistance: distMoved,
       closeDrawer,
