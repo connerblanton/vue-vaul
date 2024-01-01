@@ -247,12 +247,11 @@ function handlePointerMove(event: PointerEvent) {
 
     const opacityValue = 1 - percentageDragged;
 
-    // TODO: Fade
-    if (shouldFade || (fadeFromIndex.value && activeSnapPointIndex.value === fadeFromIndex.value - 1)) {
+    if (shouldFade.value || (fadeFromIndex.value && activeSnapPointIndex.value === fadeFromIndex.value - 1)) {
       // onDragProp?.(event, percentageDragged);
 
       set(
-        overlayRef.value,
+        overlayRef.value.$el,
         {
           opacity: `${opacityValue}`,
           transition: 'none',
@@ -261,7 +260,6 @@ function handlePointerMove(event: PointerEvent) {
       );
     }
 
-    // TODO: Scale
     if (wrapper && overlayRef.value && shouldScaleBackground.value) {
       // Calculate percentageDragged as a fraction (0 to 1)
       const scaleValue = Math.min(getScale() + percentageDragged * (1 - getScale()), 1);
