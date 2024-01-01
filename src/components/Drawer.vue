@@ -7,7 +7,8 @@ import DrawerPortal from './vue-vaul/DrawerPortal.vue'
 </script>
 
 <template>
-  <DrawerRoot :snap-points="['148px', '355px', 1]">
+  <DrawerRoot>
+  <!-- <DrawerRoot :snap-points="['148px', '355px', 1]"> -->
     <DrawerTrigger />
     <DrawerPortal>
       <DrawerOverlay class="fixed bg-black/40 inset-0" />

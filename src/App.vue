@@ -3,5 +3,7 @@ import Drawer from './components/Drawer.vue';
 </script>
 
 <template>
-  <Drawer />
+  <div class="bg-white min-h-[100vh]">
+    <Drawer />
+  </div>
 </template>

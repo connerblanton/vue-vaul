@@ -1,7 +1,8 @@
-import { computed, ref, provide, inject } from 'vue'
+import { computed, ref, provide, inject, watch } from 'vue'
 import { set, reset, getTranslateY, dampenValue } from './helpers'
 import { TRANSITIONS, VELOCITY_THRESHOLD } from './constants'
 import { useSnapPoints } from './useSnapPoints'
+import { usePositionFixed } from './usePositionFixed'
 import type { Ref } from 'vue'
 
 const CLOSE_THRESHOLD = 0.25
@@ -106,6 +107,13 @@ const {
   fadeFromIndex,
   overlayRef,
   onSnapPointChange,
+});
+
+const { restorePositionSetting } = usePositionFixed({
+  isOpen,
+  modal: true,
+  nested: false,
+  hasBeenOpened,
 });
 
 const drawerHeightRef = computed(() => drawerRef.value?.$el.getBoundingClientRect().height || 0)
@@ -327,7 +335,7 @@ function closeDrawer() {
     transition: `opacity ${TRANSITIONS.DURATION}s cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
   });
 
-  // scaleBackground(false);
+  scaleBackground(false);
 
   isVisible.value = false
   setTimeout(() => {
@@ -405,6 +413,49 @@ function handlePointerUp(event: PointerEvent) {
 
   // onReleaseProp?.(event, true);
   resetDrawer();
+}
+
+watch(isOpen, (open) => {
+  if (open) {
+    openTime.value = new Date();
+    scaleBackground(true);
+  }
+})
+
+function scaleBackground(open: boolean) {
+  const wrapper = document.querySelector('[vaul-drawer-wrapper]');
+
+  if (!wrapper || !shouldScaleBackground) return;
+
+  if (open) {
+    set(
+      document.body,
+      {
+        background: 'black',
+      },
+      true,
+    );
+
+    set(wrapper, {
+      borderRadius: `${BORDER_RADIUS}px`,
+      overflow: 'hidden',
+      transform: `scale(${getScale()}) translate3d(0, calc(env(safe-area-inset-top) + 14px), 0)`,
+      transformOrigin: 'top',
+      transitionProperty: 'transform, border-radius',
+      transitionDuration: `${TRANSITIONS.DURATION}s`,
+      transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
+    });
+  } else {
+    // Exit
+    reset(wrapper, 'overflow');
+    reset(wrapper, 'transform');
+    reset(wrapper, 'borderRadius');
+    set(wrapper, {
+      transitionProperty: 'transform, border-radius',
+      transitionDuration: `${TRANSITIONS.DURATION}s`,
+      transitionTimingFunction: `cubic-bezier(${TRANSITIONS.EASE.join(',')})`,
+    });
+  }
 }
 
 export function useProvideDrawer () {
