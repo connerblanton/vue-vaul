@@ -47,6 +47,15 @@ export type Drawer = {
   isVisible: Ref<boolean>
   drawerRef: Ref<HTMLElement | null>
   overlayRef: Ref<HTMLElement | null>
+  isDragging: Ref<boolean>
+  dragStartTime: Ref<Date>
+  isAllowedToDrag: Ref<boolean>
+  snapPoints: Ref<(number | string)[] | undefined>
+  activeSnapPoint: Ref<number | string | null>
+  pointerStartY: Ref<number>
+  dismissible: Ref<boolean>
+  drawerHeightRef: Ref<number>
+  snapPointsOffset: Ref<number[]>
   handlePointerDown: (event: PointerEvent) => void
   handlePointerMove: (event: PointerEvent) => void
   handlePointerUp: (event: PointerEvent) => void
@@ -413,8 +422,10 @@ export function useProvideDrawer () {
     dragStartTime,
     isAllowedToDrag,
     snapPoints,
+    activeSnapPoint,
     pointerStartY,
     dismissible,
+    snapPointsOffset,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp

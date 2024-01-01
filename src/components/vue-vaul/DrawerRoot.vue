@@ -5,9 +5,12 @@ import type { DialogProps } from './';
 
 const props = defineProps<DialogProps>()
 
-const { isOpen, snapPoints } = useProvideDrawer()
+const { isOpen, snapPoints, activeSnapPoint } = useProvideDrawer()
 
-snapPoints.value = props.snapPoints
+if (props.snapPoints) {
+  snapPoints.value = props.snapPoints
+  activeSnapPoint.value = props.snapPoints[0]
+}
 </script>
 
 <template>
