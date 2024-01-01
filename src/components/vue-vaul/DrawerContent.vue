@@ -18,7 +18,7 @@ watch(() => drawer.isOpen.value, (isOpen) => {
   if (isOpen) {
     setTimeout(() => {
       drawer.isVisible.value = true
-    }, 100)
+    }, 1)
   }
 })
 </script>
