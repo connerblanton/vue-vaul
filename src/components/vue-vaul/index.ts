@@ -63,7 +63,7 @@ const isAllowedToDrag = ref(true)
 // const drawerHeightRef = ref(0)
 const drawerRef = ref<HTMLDivElement | null>(null)
 const overlayRef = ref<HTMLDivElement | null>(null)
-const snapPoints = ref<number[] | undefined>(undefined)
+const snapPoints = ref<(number | string)[] | undefined>(undefined)
 const pointerStartY = ref(0)
 const dismissible = ref(true)
 const shouldScaleBackground = ref(true)
@@ -83,16 +83,16 @@ const onSnapPointChange = () => {
 const {
   activeSnapPoint,
   activeSnapPointIndex,
-  onRelease: onReleaseSnapPoints,
+  handlePointerUp: onReleaseSnapPoints,
   snapPointsOffset,
-  onDrag: onDragSnapPoints,
+  handlePointerMove: onDragSnapPoints,
   shouldFade,
   getPercentageDragged: getSnapPointsPercentageDragged,
 } = useSnapPoints({
-  snapPoints: snapPoints.value,
-  activeSnapPointProp: activeSnapPointProp.value,
+  snapPoints,
+  activeSnapPointProp,
   drawerRef,
-  fadeFromIndex: fadeFromIndex.value,
+  fadeFromIndex,
   overlayRef,
   onSnapPointChange,
 });
@@ -366,6 +366,7 @@ function handlePointerUp(event: PointerEvent) {
 
   // TODO: SnapPoints
   if (snapPoints.value) {
+    console.log('has snapPoints')
     onReleaseSnapPoints({
       draggedDistance: distMoved,
       closeDrawer,

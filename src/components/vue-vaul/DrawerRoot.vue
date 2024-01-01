@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { DialogRoot } from 'radix-vue'
 import { useProvideDrawer } from './'
+import type { DialogProps } from './';
 
-const { isOpen } = useProvideDrawer()
+const props = defineProps<DialogProps>()
+
+const { isOpen, snapPoints } = useProvideDrawer()
+
+snapPoints.value = props.snapPoints
 </script>
 
 <template>

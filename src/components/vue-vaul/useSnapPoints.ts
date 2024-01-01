@@ -11,34 +11,35 @@ export function useSnapPoints({
   fadeFromIndex,
   onSnapPointChange,
 }: {
-  activeSnapPointProp?: number | string | null;
-  snapPoints?: (number | string)[];
-  fadeFromIndex?: number;
+  activeSnapPointProp?: Ref<number | string | null>;
+  snapPoints?: Ref<(number | string)[] | undefined>;
+  fadeFromIndex?: Ref<number | undefined>;
   drawerRef: Ref<HTMLDivElement | null>;
   overlayRef: Ref<HTMLDivElement | null>;
   onSnapPointChange(activeSnapPointIndex: number): void;
 }) {
-  // const [activeSnapPoint, setActiveSnapPoint] = useControllableState<string | number | null>({
-  //   prop: activeSnapPointProp,
-  //   defaultProp: snapPoints?.[0],
-  //   onChange: setActiveSnapPointProp,
-  // });
-  const activeSnapPoint = ref(activeSnapPointProp)
+  const activeSnapPoint = ref(null) as Ref<number | string | null>
 
-  const isLastSnapPoint = computed(() => activeSnapPoint.value === snapPoints?.[snapPoints.length - 1] ?? null)
+  watch(() => snapPoints?.value, (newVal, oldVal) => {
+    if (!oldVal && newVal) {
+      activeSnapPoint.value = newVal[0]
+    }
+  })
+
+  const isLastSnapPoint = computed(() => activeSnapPoint.value === snapPoints?.value[snapPoints?.value?.length - 1])
 
   const shouldFade =
     (snapPoints &&
-        snapPoints.length > 0 &&
+        snapPoints?.value?.length > 0 &&
         (fadeFromIndex || fadeFromIndex === 0) &&
         !Number.isNaN(fadeFromIndex) &&
-        snapPoints[fadeFromIndex] === activeSnapPoint.value) ||
+        snapPoints?.value[fadeFromIndex] === activeSnapPoint.value) ||
     !snapPoints;
 
-  const activeSnapPointIndex = computed(() => snapPoints?.findIndex((snapPoint) => snapPoint === activeSnapPoint.value) ?? null)
+  const activeSnapPointIndex = computed(() => snapPoints?.value?.findIndex((snapPoint) => snapPoint === activeSnapPoint.value))
 
   const snapPointsOffset = computed(() => {
-    return snapPoints?.map((snapPoint) => {
+    return snapPoints?.value?.map((snapPoint) => {
       const hasWindow = typeof window !== 'undefined';
       const isPx = typeof snapPoint === 'string';
       let snapPointAsNumber = 0;
@@ -57,7 +58,7 @@ export function useSnapPoints({
     }) ?? []
   })
 
-  const activeSnapPointOffset = computed(() => activeSnapPointIndex.value !== null ? snapPointsOffset.value?.[activeSnapPointIndex.value] : null)
+  const activeSnapPointOffset = computed(() => activeSnapPointIndex.value !== undefined ? snapPointsOffset.value[activeSnapPointIndex.value] : null)
 
   const snapToPoint = (height: number) => {
     const newSnapPointIndex = snapPointsOffset.value?.findIndex((snapPointHeight) => snapPointHeight === height) ?? null;
@@ -84,19 +85,19 @@ export function useSnapPoints({
       });
     }
 
-    activeSnapPoint.value = newSnapPointIndex !== null ? snapPoints?.[newSnapPointIndex] : null;
+    activeSnapPoint.value = newSnapPointIndex !== null ? snapPoints?.value[newSnapPointIndex] : null;
   }
 
   watch([activeSnapPointProp, snapPoints, snapPointsOffset], () => {
     if (activeSnapPointProp) {
-      const newIndex = snapPoints?.findIndex((snapPoint) => snapPoint === activeSnapPointProp) ?? null;
+      const newIndex = snapPoints?.value?.findIndex((snapPoint) => snapPoint === activeSnapPointProp) ?? null;
       if (snapPointsOffset && newIndex && typeof snapPointsOffset.value[newIndex] === 'number') {
         snapToPoint(snapPointsOffset.value[newIndex] as number);
       }
     }
   })
 
-  function onRelease({
+  function handlePointerUp({
     draggedDistance,
     closeDrawer,
     velocity,
@@ -126,8 +127,8 @@ export function useSnapPoints({
       return;
     }
 
-    if (velocity > 2 && hasDraggedUp && snapPointsOffset && snapPoints) {
-      snapToPoint(snapPointsOffset.value[snapPoints.length - 1] as number);
+    if (velocity > 2 && hasDraggedUp && snapPointsOffset && snapPoints?.value) {
+      snapToPoint(snapPointsOffset.value[snapPoints?.value?.length - 1] as number);
       return;
     }
 
@@ -143,7 +144,7 @@ export function useSnapPoints({
 
       // Don't do anything if we swipe upwards while being on the last snap point
       if (dragDirection > 0 && isLastSnapPoint) {
-        snapToPoint(snapPointsOffset.value[snapPoints.length - 1]);
+        snapToPoint(snapPointsOffset.value[snapPoints?.value?.length - 1]);
         return;
       }
 
@@ -151,7 +152,7 @@ export function useSnapPoints({
         closeDrawer();
       }
 
-      if (activeSnapPointIndex === null) return;
+      if (!activeSnapPointIndex.value) return;
 
       snapToPoint(snapPointsOffset.value[activeSnapPointIndex.value + dragDirection]);
       return;
@@ -160,22 +161,21 @@ export function useSnapPoints({
     snapToPoint(closestSnapPoint);
   }
 
-  function onDrag({ draggedDistance }: { draggedDistance: number }) {
+  function handlePointerMove({ draggedDistance }: { draggedDistance: number }) {
     if (activeSnapPointOffset.value === null) return;
     const newYValue = activeSnapPointOffset.value - draggedDistance;
-
     set(drawerRef.value.$el, {
       transform: `translate3d(0, ${newYValue}px, 0)`,
     });
   }
 
   function getPercentageDragged(absDraggedDistance: number, isDraggingDown: boolean) {
-    if (!snapPoints || typeof activeSnapPointIndex !== 'number' || !snapPointsOffset || fadeFromIndex === undefined)
+    if (!snapPoints?.value || typeof activeSnapPointIndex.value !== 'number' || !snapPointsOffset || fadeFromIndex?.value === undefined)
       return null;
 
     // If this is true we are dragging to a snap point that is supposed to have an overlay
-    const isOverlaySnapPoint = activeSnapPointIndex === fadeFromIndex - 1;
-    const isOverlaySnapPointOrHigher = activeSnapPointIndex >= fadeFromIndex;
+    const isOverlaySnapPoint = activeSnapPointIndex.value === fadeFromIndex.value - 1;
+    const isOverlaySnapPointOrHigher = activeSnapPointIndex.value >= fadeFromIndex.value;
 
     if (isOverlaySnapPointOrHigher && isDraggingDown) {
       return 0;
@@ -208,8 +208,8 @@ export function useSnapPoints({
     shouldFade,
     getPercentageDragged,
     activeSnapPointIndex,
-    onRelease,
-    onDrag,
+    handlePointerUp,
+    handlePointerMove,
     snapPointsOffset,
   };
 }
