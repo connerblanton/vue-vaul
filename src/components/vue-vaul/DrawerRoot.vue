@@ -5,16 +5,25 @@ import type { DialogProps } from './';
 
 const props = defineProps<DialogProps>()
 
-const { isOpen, snapPoints, activeSnapPoint } = useProvideDrawer()
+const { isOpen, hasBeenOpened, snapPoints, activeSnapPoint, closeDrawer } = useProvideDrawer()
 
 if (props.snapPoints) {
   snapPoints.value = props.snapPoints
   activeSnapPoint.value = props.snapPoints[0]
 }
+
+const handleOpenChange = (o: boolean) => {
+  if (!o) {
+    closeDrawer()
+  } else {
+    hasBeenOpened.value = true
+    isOpen.value = o
+  }
+}
 </script>
 
 <template>
-  <DialogRoot v-model:open="isOpen">
+  <DialogRoot @update:open="handleOpenChange" :open="isOpen">
     <slot />
   </DialogRoot>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, useAttrs } from 'vue'
+import { computed, useAttrs, watch } from 'vue'
 import { DialogContent } from 'radix-vue'
 import { useInjectDrawer } from './'
 
@@ -13,12 +13,20 @@ const snapPointHeight = computed(() => {
   }
   return '0'
 })
+
+watch(() => drawer.isOpen.value, (isOpen) => {
+  if (isOpen) {
+    setTimeout(() => {
+      drawer.isVisible.value = true
+    }, 100)
+  }
+})
 </script>
 
 <template>
   <DialogContent
     vaul-drawer=""
-    :vaul-drawer-visible="drawer.isOpen ? 'true' : 'false'"
+    :vaul-drawer-visible="drawer.isVisible.value ? 'true' : 'false'"
     ref="drawerRef"
     :style="[attrs.style, { '--snap-point-height': snapPointHeight }]"
     @pointerdown="drawer.handlePointerDown"

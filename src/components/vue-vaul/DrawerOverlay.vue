@@ -8,7 +8,7 @@ const { overlayRef, ...drawer } = useInjectDrawer()
 <template>
   <DialogOverlay
     vaul-overlay=""
-    :vaul-drawer-visible="drawer?.isOpen ? 'true' : 'false'"
+    :vaul-drawer-visible="drawer?.isVisible.value ? 'true' : 'false'"
     ref="overlayRef"
   >
     <slot />

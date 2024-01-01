@@ -44,6 +44,7 @@ export type DialogProps = {
 
 export type Drawer = {
   isOpen: Ref<boolean>
+  hasBeenOpened: Ref<boolean>
   isVisible: Ref<boolean>
   drawerRef: Ref<HTMLElement | null>
   overlayRef: Ref<HTMLElement | null>
@@ -59,17 +60,18 @@ export type Drawer = {
   handlePointerDown: (event: PointerEvent) => void
   handlePointerMove: (event: PointerEvent) => void
   handlePointerUp: (event: PointerEvent) => void
+  closeDrawer: () => void
 }
 
 const isOpen = ref(false)
+const hasBeenOpened = ref(false)
 const isVisible = ref(false)
 const isDragging = ref(false)
 const dragStartTime = ref(new Date())
-const dragEndTime = ref(new Date()) // should initialize as null?
+const dragEndTime = ref(new Date()) // TODO: should initialize as null?
 const openTime = ref<Date | null>(null)
 const lastTimeDragPrevented = ref<Date | null>(null)
 const isAllowedToDrag = ref(true)
-// const drawerHeightRef = ref(0)
 const drawerRef = ref<HTMLDivElement | null>(null)
 const overlayRef = ref<HTMLDivElement | null>(null)
 const snapPoints = ref<(number | string)[] | undefined>(undefined)
@@ -327,8 +329,8 @@ function closeDrawer() {
 
   // scaleBackground(false);
 
+  isVisible.value = false
   setTimeout(() => {
-    isVisible.value = false
     isOpen.value = false
   }, 300);
 
@@ -408,6 +410,7 @@ function handlePointerUp(event: PointerEvent) {
 export function useProvideDrawer () {
   const drawer = {
     isOpen,
+    hasBeenOpened,
     isVisible,
     drawerRef,
     drawerHeightRef,
@@ -422,7 +425,8 @@ export function useProvideDrawer () {
     snapPointsOffset,
     handlePointerDown,
     handlePointerMove,
-    handlePointerUp
+    handlePointerUp,
+    closeDrawer
   }
 
   provide<Drawer>('drawer', drawer)
