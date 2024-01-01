@@ -22,7 +22,6 @@ export function usePositionFixed(options: PositionFixedOptions) {
   const scrollPos = ref(0);
 
   function setPositionFixed(): void {
-    console.log('setPositionFixed')
     if (previousBodyPosition === null && isOpen.value) {
       previousBodyPosition = {
         position: document.body.style.position,
