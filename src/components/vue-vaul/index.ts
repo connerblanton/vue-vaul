@@ -78,7 +78,7 @@ const overlayRef = ref<HTMLDivElement | null>(null)
 const snapPoints = ref<(number | string)[] | undefined>(undefined)
 const pointerStartY = ref(0)
 const dismissible = ref(true)
-const shouldScaleBackground = ref(true)
+const shouldScaleBackground = ref(false)
 const justReleased = ref(false)
 
 const scrollLockTimeout = ref(SCROLL_LOCK_TIMEOUT)
@@ -423,7 +423,7 @@ watch(isOpen, (open) => {
 function scaleBackground(open: boolean) {
   const wrapper = document.querySelector('[vaul-drawer-wrapper]');
 
-  if (!wrapper || !shouldScaleBackground) return;
+  if (!wrapper || !shouldScaleBackground.value) return;
 
   if (open) {
     set(
@@ -456,7 +456,16 @@ function scaleBackground(open: boolean) {
   }
 }
 
-export function useProvideDrawer () {
+export function useProvideDrawer (props: DialogProps) {
+  if (props.snapPoints) {
+    snapPoints.value = props.snapPoints
+    activeSnapPoint.value = props.snapPoints[0]
+  }
+  
+  if (props.shouldScaleBackground) {
+    shouldScaleBackground.value = props.shouldScaleBackground
+  }
+
   const drawer = {
     isOpen,
     hasBeenOpened,

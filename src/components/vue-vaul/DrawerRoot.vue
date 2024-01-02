@@ -5,12 +5,7 @@ import type { DialogProps } from './';
 
 const props = defineProps<DialogProps>()
 
-const { isOpen, hasBeenOpened, snapPoints, activeSnapPoint, closeDrawer } = useProvideDrawer()
-
-if (props.snapPoints) {
-  snapPoints.value = props.snapPoints
-  activeSnapPoint.value = props.snapPoints[0]
-}
+const { isOpen, hasBeenOpened, closeDrawer } = useProvideDrawer(props)
 
 const handleOpenChange = (o: boolean) => {
   if (!o) {

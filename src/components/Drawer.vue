@@ -8,8 +8,8 @@ import { DialogTitle } from 'radix-vue'
 </script>
 
 <template>
-  <DrawerRoot>
-  <!-- <DrawerRoot :snap-points="['148px', '355px', 1]"> -->
+  <!-- <DrawerRoot> -->
+  <DrawerRoot :snap-points="[0.25, 1]" should-scale-background>
     <DrawerTrigger />
     <DrawerPortal>
       <DrawerOverlay class="fixed bg-black/40 inset-0" />
